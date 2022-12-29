@@ -1,5 +1,5 @@
 
-from geopandas import read_file, GeoSeries
+from geopandas import read_file, GeoSeries, gdf
 from math import hypot, sin, cos, radians
 from math import sqrt
 from numpy.random import uniform
@@ -28,14 +28,10 @@ def offset(x,y, distance, direction):
     return (x2, y2)
 
 def get_rand_nums(x,y):
-    list1 = []
-    j = 0
-    while j < 12 :
         rand_dir = uniform(0,360)
         rand_dist = uniform(0,10000)
-        list1.append(Point(offset(x , y, rand_dir, rand_dist)))
-        j+=1
-    return(list1)
+        return(Point(offset(x , y, rand_dir, rand_dist)))
+    
 
 
 BNG = CRS. from_epsg (27700)
@@ -48,8 +44,8 @@ pointData = read_file("../assessment2/data/level3-tweets-subset.shp").to_crs(BNG
 print(pointData)
 
 geometries = gm_districts['geometry']
-
-tweet_points = []
+print(geometries)
+bound = gm_districts.bounds
 
 idx = Index()
 for id, point in pointData.iterrows():
@@ -60,11 +56,9 @@ print(id)
 print(point.geometry.bounds)
 
 for i in range(len(geometries)):
-    e = geometries[i]
-    b = list(geometries[i].bounds)
+    b = geometries[i].bounds
     c = geometries[i].centroid
    
-    print(e)
     print(b)
     print(c)
     
@@ -82,23 +76,14 @@ for i in range(len(geometries)):
     # how many rows are left now? 
     print(f"Filtered points: {len(possible_matches.index)}")               
 
-    x_coords = possible_matches['lat']
-    print(x_coords)
-    y_coords = possible_matches['lng']
-    print(y_coords)
-       
-
-#use get random points function for each set of possible matches tweets
-#loop to keep only the ones within the bounds
-    
-    random_points = []
-    i = 0
-    for x, y in zip(x_coords, y_coords):
-        while i < 12:
-            while len(random_points) < 12:
-                point = get_rand_nums(x,y)
-                if point.within(b) == True:
-                    random_points.append(x,y)
-                else:
-                    continue
-                i +=1
+    #loop through the possible_match dataframe to get index of each row (from 0 onwards) and lat,lng columns    
+    for i, row in enumerate(gdf.to_dict(possible_matches="lat,lng")):
+        print(['lat'])
+        pts = get_rand_nums(x,y)
+        
+        random_points = []
+        while len(random_points) < 12:
+            if pts.within(b) == True:
+                random_points.append(x,y)
+            else:
+                continue
