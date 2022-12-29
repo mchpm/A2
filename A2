@@ -1,0 +1,107 @@
+
+from geopandas import read_file, GeoSeries
+from math import hypot, sin, cos, radians
+from math import sqrt
+from numpy.random import uniform
+from pathlib import Path
+from pyproj import CRS
+from rtree.index import Index
+from shapely.geometry import Point, Polygon, MultiPoint
+
+def distance(x1, y1, x2, y2):
+	"""
+	* Use Pythagoras' theorem to measure distance. This is acceptable in this 
+      case because:
+	*	 - the CRS of the data is a local projection
+	*	 - the distances are short
+	*    - computational efficiency is important (as we are making many
+            measurements)
+	"""
+	return sqrt((x1 - x2)**2 + (y1 - y2)**2)
+
+def offset(x,y, distance, direction):
+    """
+    * Offset a location by a given distance and direction
+    """
+    x2 = x + cos(radians(direction)) * distance
+    y2 = y + sin(radians(direction)) * distance
+    return (x2, y2)
+
+def get_rand_nums(x,y):
+    list1 = []
+    j = 0
+    while j < 12 :
+        rand_dir = uniform(0,360)
+        rand_dist = uniform(0,10000)
+        list1.append(Point(offset(x , y, rand_dir, rand_dist)))
+        j+=1
+    return(list1)
+
+
+BNG = CRS. from_epsg (27700)
+
+#read in the greater manchester district polygons in the correct crs
+gm_districts = read_file("../assessment2/data/gm-districts.shp").to_crs(BNG)
+print(gm_districts)
+
+pointData = read_file("../assessment2/data/level3-tweets-subset.shp").to_crs(BNG)
+print(pointData)
+
+geometries = gm_districts['geometry']
+
+tweet_points = []
+
+idx = Index()
+for id, point in pointData.iterrows():
+    idx.insert(id, point.geometry.bounds)
+
+print(idx)
+print(id)
+print(point.geometry.bounds)
+
+for i in range(len(geometries)):
+    e = geometries[i]
+    b = list(geometries[i].bounds)
+    c = geometries[i].centroid
+   
+    print(e)
+    print(b)
+    print(c)
+    
+    #issues with the bounding box: a bounding box around a polygon will intersect with other polygons,
+    #so points within that bounding box are not necessarily within the districts' limits     
+    possible_matches_index= list(idx.intersection(b))
+        
+    print(possible_matches_index)
+    
+    # use those indexes to extract the possible matches from the GeoDataFrame
+    possible_matches = pointData.iloc[possible_matches_index]
+    
+    print(possible_matches)
+    
+    # how many rows are left now? 
+    print(f"Filtered points: {len(possible_matches.index)}")               
+
+    x_coords = possible_matches['lat']
+    print(x_coords)
+    y_coords = possible_matches['lng']
+    print(y_coords)
+       
+
+    # Initialise a variable to store points within the district polygon
+
+      
+#use get random points function for each set of possible matches tweets
+#loop to keep only the ones within the bounds
+    
+    random_points = []
+    i = 0
+    for x, y in zip(x_coords, y_coords):
+        while i < 12:
+            while len(random_points) < 12:
+                point = get_rand_nums(x,y)
+                if point.within(b) == True:
+                    random_points.append(x,y)
+                else:
+                    continue
+                i +=1
