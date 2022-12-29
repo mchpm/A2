@@ -88,9 +88,6 @@ for i in range(len(geometries)):
     print(y_coords)
        
 
-    # Initialise a variable to store points within the district polygon
-
-      
 #use get random points function for each set of possible matches tweets
 #loop to keep only the ones within the bounds
     
