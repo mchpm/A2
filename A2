@@ -1,5 +1,5 @@
 
-from geopandas import read_file, GeoSeries, gdf
+from geopandas import read_file, GeoSeries
 from math import hypot, sin, cos, radians
 from math import sqrt
 from numpy.random import uniform
@@ -7,6 +7,7 @@ from pathlib import Path
 from pyproj import CRS
 from rtree.index import Index
 from shapely.geometry import Point, Polygon, MultiPoint
+
 
 def distance(x1, y1, x2, y2):
 	"""
@@ -19,20 +20,20 @@ def distance(x1, y1, x2, y2):
 	"""
 	return sqrt((x1 - x2)**2 + (y1 - y2)**2)
 
-def offset(x,y, distance, direction):
+def offset(x , y , distance, direction):
     """
     * Offset a location by a given distance and direction
     """
     x2 = x + cos(radians(direction)) * distance
     y2 = y + sin(radians(direction)) * distance
-    return (x2, y2)
+    return (x2 , y2)
 
 def get_rand_nums(x,y):
         rand_dir = uniform(0,360)
-        rand_dist = uniform(0,10000)
-        return(Point(offset(x , y, rand_dir, rand_dist)))
-    
-
+        rand_dist = uniform(0,10)
+        return(Point(offset(x , y, rand_dist, rand_dir)))# this line takes ages to process
+        
+#poss_point = get_rand_nums(1,2)
 
 BNG = CRS. from_epsg (27700)
 
@@ -47,20 +48,26 @@ geometries = gm_districts['geometry']
 print(geometries)
 bound = gm_districts.bounds
 
+
 idx = Index()
 for id, point in pointData.iterrows():
     idx.insert(id, point.geometry.bounds)
+
+rand_points = [] # list type
+
+zazzy = gm_districts.bounds
 
 print(idx)
 print(id)
 print(point.geometry.bounds)
 
 for i in range(len(geometries)):
-    b = geometries[i].bounds
+    b = bound.loc[i]
     c = geometries[i].centroid
    
     print(b)
     print(c)
+
     
     #issues with the bounding box: a bounding box around a polygon will intersect with other polygons,
     #so points within that bounding box are not necessarily within the districts' limits     
@@ -76,14 +83,17 @@ for i in range(len(geometries)):
     # how many rows are left now? 
     print(f"Filtered points: {len(possible_matches.index)}")               
 
-    #loop through the possible_match dataframe to get index of each row (from 0 onwards) and lat,lng columns    
-    for i, row in enumerate(gdf.to_dict(possible_matches="lat,lng")):
-        print(['lat'])
-        pts = get_rand_nums(x,y)
-        
-        random_points = []
-        while len(random_points) < 12:
-            if pts.within(b) == True:
-                random_points.append(x,y)
-            else:
-                continue
+
+    #this generates 12 random points per tweet NOT filtered by spatial index- they can be inside and outside bounds   
+    
+    for index, row in possible_matches.iterrows():
+        r = 0
+        while r < 12:
+            #lat and lng are columns inside possible_matches
+           poss_point = (get_rand_nums(row['lat'], row['lng'])) 
+           
+print(poss_point)           
+          
+ 
+    
+    
